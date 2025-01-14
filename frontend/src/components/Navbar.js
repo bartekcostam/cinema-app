@@ -24,6 +24,9 @@ function Navbar() {
         <Button color="inherit" component={RouterLink} to="/register">
           Zarejestruj
         </Button>
+        <Button color="inherit" component={RouterLink} to="/repertuar">
+            Repertuar
+        </Button>
       </Toolbar>
     </AppBar>
   );

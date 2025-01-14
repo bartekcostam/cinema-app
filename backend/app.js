@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import filmRoutes from './routes/filmRoutes.js';
+import seanceRoutes from './routes/seanceRoutes.js';
+
 
 
 const app = express();
@@ -13,6 +15,8 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 app.use('/api/films', filmRoutes);
+
+app.use('/api/seances', seanceRoutes);
 
 
 app.get('/', (req, res) => {
