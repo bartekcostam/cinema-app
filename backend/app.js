@@ -3,6 +3,8 @@ import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import filmRoutes from './routes/filmRoutes.js';
 import seanceRoutes from './routes/seanceRoutes.js';
+import ticketRoutes from './routes/ticketRoutes.js';
+
 
 
 
@@ -17,6 +19,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/films', filmRoutes);
 
 app.use('/api/seances', seanceRoutes);
+app.use('/api/tickets', ticketRoutes);
+
 
 
 app.get('/', (req, res) => {
