@@ -1,5 +1,13 @@
 // frontend/src/pages/RegisterPage.js
 import React, { useState } from 'react';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Container,
+  Paper,
+} from '@mui/material';
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -24,10 +32,11 @@ function RegisterPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
-        // ewentualnie przekierowanie do strony logowania
+        alert(data.message || 'Rejestracja udana!');
+        // ewentualnie przekierowanie do strony logowania:
+        // window.location.href = '/login';
       } else {
-        alert(data.error || 'Błąd');
+        alert(data.error || 'Błąd rejestracji');
       }
     } catch (error) {
       console.error('Register error:', error);
@@ -35,28 +44,51 @@ function RegisterPage() {
   };
 
   return (
-    <div>
-      <h2>Rejestracja</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Imię:</label>
-          <input name="firstName" value={formData.firstName} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Nazwisko:</label>
-          <input name="lastName" value={formData.lastName} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Email:</label>
-          <input name="email" value={formData.email} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Hasło:</label>
-          <input type="password" name="password" value={formData.password} onChange={handleChange} />
-        </div>
-        <button type="submit">Zarejestruj</button>
-      </form>
-    </div>
+    <Container maxWidth="xs">
+      <Paper sx={{ p: 3, mt: 5 }}>
+        <Typography variant="h5" textAlign="center" mb={2}>
+          Zarejestruj się
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit}>
+          <TextField
+            label="Imię"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Nazwisko"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Hasło"
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
+            Zarejestruj
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   );
 }
 
