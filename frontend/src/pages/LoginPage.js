@@ -1,5 +1,13 @@
 // frontend/src/pages/LoginPage.js
 import React, { useState } from 'react';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Container,
+  Paper,
+} from '@mui/material';
 
 function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -19,10 +27,10 @@ function LoginPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(data.message);
-        // Zapisz token w localStorage / sessionStorage
+        alert(data.message || 'Zalogowano pomyślnie');
         localStorage.setItem('token', data.token);
-        // ewentualnie redirect do strony głównej
+        // Tu ewentualnie redirect na stronę główną:
+        // window.location.href = '/';
       } else {
         alert(data.error || 'Błąd logowania');
       }
@@ -32,20 +40,35 @@ function LoginPage() {
   };
 
   return (
-    <div>
-      <h2>Logowanie</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
-          <input name="email" value={formData.email} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Hasło:</label>
-          <input type="password" name="password" value={formData.password} onChange={handleChange} />
-        </div>
-        <button type="submit">Zaloguj</button>
-      </form>
-    </div>
+    <Container maxWidth="xs">
+      <Paper sx={{ p: 3, mt: 5 }}>
+        <Typography variant="h5" textAlign="center" mb={2}>
+          Zaloguj się
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit}>
+          <TextField
+            label="Email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <TextField
+            label="Hasło"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+          />
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
+            Zaloguj
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   );
 }
 

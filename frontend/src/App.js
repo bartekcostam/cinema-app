@@ -1,18 +1,20 @@
 // frontend/src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import RegisterPage from './pages/RegisterPage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-// import HomePage, RepertuarPage, itp.
+import RegisterPage from './pages/RegisterPage';
 
 function App() {
   return (
     <Router>
+      <Navbar />
       <Routes>
-        <Route path="/" element={<div>Strona główna</div>} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        {/* inne ścieżki */}
+        <Route path="/register" element={<RegisterPage />} />
+        {/* inne trasy w przyszłości... */}
       </Routes>
     </Router>
   );
