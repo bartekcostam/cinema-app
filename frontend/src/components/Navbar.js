@@ -27,6 +27,9 @@ function Navbar() {
         <Button color="inherit" component={RouterLink} to="/repertuar">
             Repertuar
         </Button>
+        <Button component={RouterLink} to="/admin/snacks">
+  Zarządzaj Snackami
+</Button>
       </Toolbar>
     </AppBar>
   );

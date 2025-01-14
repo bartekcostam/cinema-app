@@ -1,11 +1,10 @@
 // backend/routes/seanceRoutes.js
 import express from 'express';
-import { getAllSeancesWithFilm } from '../controllers/seanceController.js';
-// ewentualnie inne funkcje, np. createSeance, updateSeance, etc.
+import { getAllSeancesWithFilm, getSeanceById } from '../controllers/seanceController.js';
 
 const router = express.Router();
 
-// GET /api/seances
 router.get('/', getAllSeancesWithFilm);
+router.get('/:id', getSeanceById);
 
 export default router;

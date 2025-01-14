@@ -1,12 +1,14 @@
 // backend/models/index.js
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import path from 'path';
 
 let db;
 
-export const initDb = async () => {
-  db = await open({
-    filename: './cinema.db',
+export const initDb = async (dbPath = './cinema.db') => {
+    const resolvedPath = path.resolve(dbPath)
+    db = await open({
+    filename: resolvedPath,
     driver: sqlite3.Database,
   });
 
@@ -37,19 +39,32 @@ export const initDb = async () => {
     );
   `);
 
+  // Tabela rooms
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS rooms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,   -- klucz główny
+      roomNumber INTEGER,                     -- numer sali
+      rowsCount INTEGER,
+      colsCount INTEGER,
+      layout TEXT,  -- JSON ze strefami vipRows itp.
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Tabela seances
   await db.exec(`
     CREATE TABLE IF NOT EXISTS seances (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       filmId INTEGER,
+      roomId INTEGER,        -- klucz obcy do tabeli rooms(id)
       date DATE,
       startTime TIME,
-      roomNumber INTEGER,
       vipPrice REAL,
       normalPrice REAL,
       discountedPrice REAL,
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (filmId) REFERENCES films(id) ON DELETE CASCADE
+      FOREIGN KEY (filmId) REFERENCES films(id) ON DELETE CASCADE,
+      FOREIGN KEY (roomId) REFERENCES rooms(id) ON DELETE CASCADE
     );
   `);
 
@@ -80,7 +95,7 @@ export const initDb = async () => {
     );
   `);
 
-  console.log('Database initialized with new tables (users, films, seances, tickets, snacks)');
+  console.log('Database initialized with new tables (users, films, rooms, seances, tickets, snacks)');
 };
 
 export const getDb = () => {

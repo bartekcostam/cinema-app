@@ -3,13 +3,33 @@ import { getDb } from './index.js';
 
 export const createSeance = async (seanceData) => {
   const db = getDb();
-  const { filmId, date, startTime, roomNumber, vipPrice, normalPrice, discountedPrice } = seanceData;
+  const {
+    filmId,
+    roomId,          // obca kolumna, łączy z rooms.id
+    date,
+    startTime,
+    vipPrice,
+    normalPrice,
+    discountedPrice
+  } = seanceData;
+
+  // Wstawiamy do kolumn: filmId, roomId, ...
   const result = await db.run(
-    `INSERT INTO seances (filmId, date, startTime, roomNumber, vipPrice, normalPrice, discountedPrice)
+    `INSERT INTO seances
+      (filmId, roomId, date, startTime, vipPrice, normalPrice, discountedPrice)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [filmId, date, startTime, roomNumber, vipPrice, normalPrice, discountedPrice]
+    [
+      filmId,
+      roomId,
+      date,
+      startTime,
+      vipPrice,
+      normalPrice,
+      discountedPrice,
+    ]
   );
-  return result.lastID;
+
+  return result.lastID; // ID nowego seansu
 };
 
 export const getAllSeances = async () => {
@@ -24,15 +44,39 @@ export const getSeanceById = async (id) => {
   return seance;
 };
 
-// update, delete analogicznie
 export const updateSeance = async (id, seanceData) => {
   const db = getDb();
-  const { filmId, date, startTime, roomNumber, vipPrice, normalPrice, discountedPrice } = seanceData;
+  // UWAGA: tutaj też należy użyć 'roomId', jeśli chcemy edytować salę w seansie
+  const {
+    filmId,
+    roomId,
+    date,
+    startTime,
+    vipPrice,
+    normalPrice,
+    discountedPrice
+  } = seanceData;
+
   await db.run(
     `UPDATE seances
-     SET filmId = ?, date = ?, startTime = ?, roomNumber = ?, vipPrice = ?, normalPrice = ?, discountedPrice = ?
+     SET filmId = ?,
+         roomId = ?,
+         date = ?,
+         startTime = ?,
+         vipPrice = ?,
+         normalPrice = ?,
+         discountedPrice = ?
      WHERE id = ?`,
-    [filmId, date, startTime, roomNumber, vipPrice, normalPrice, discountedPrice, id]
+    [
+      filmId,
+      roomId,
+      date,
+      startTime,
+      vipPrice,
+      normalPrice,
+      discountedPrice,
+      id
+    ]
   );
 };
 

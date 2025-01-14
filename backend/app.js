@@ -4,6 +4,9 @@ import authRoutes from './routes/authRoutes.js';
 import filmRoutes from './routes/filmRoutes.js';
 import seanceRoutes from './routes/seanceRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
+import roomRoutes from './routes/roomRoutes.js';
+import snackRoutes from './routes/snackRoutes.js';
+
 
 
 
@@ -20,6 +23,10 @@ app.use('/api/films', filmRoutes);
 
 app.use('/api/seances', seanceRoutes);
 app.use('/api/tickets', ticketRoutes);
+
+app.use('/api/rooms', roomRoutes);
+
+app.use('/api/snacks', snackRoutes);
 
 
 
