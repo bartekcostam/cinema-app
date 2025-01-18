@@ -1,16 +1,18 @@
 // frontend/src/pages/LoginPage.js
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  TextField,
-  Button,
-  Typography,
   Container,
   Paper,
+  Typography,
+  Box,
+  TextField,
+  Button
 } from '@mui/material';
 
 function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,16 +28,24 @@ function LoginPage() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+      
       if (res.ok) {
-        alert(data.message || 'Zalogowano pomyślnie');
+        // Zapisz token i rolę w localStorage
         localStorage.setItem('token', data.token);
-        // Tu ewentualnie redirect na stronę główną:
-        // window.location.href = '/';
+        localStorage.setItem('role', data.user.role);
+
+        // Przekierowanie zależne od roli:
+        if (data.user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/user/dashboard');
+        }
       } else {
         alert(data.error || 'Błąd logowania');
       }
     } catch (error) {
       console.error('Login error:', error);
+      alert('Błąd połączenia');
     }
   };
 

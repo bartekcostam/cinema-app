@@ -1,11 +1,16 @@
 // frontend/src/pages/HomePage.js
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
-import Slider from 'react-slick'; // z paczki react-slick
+import { useNavigate } from 'react-router-dom';
+import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 function HomePage() {
+  const [films, setFilms] = useState([]);
+  const navigate = useNavigate();
+
+  // Ustawienia karuzeli
   const settings = {
     dots: true,
     infinite: true,
@@ -16,30 +21,24 @@ function HomePage() {
     autoplaySpeed: 2500,
   };
 
-  // Tymczasowe dane do slidera
-  const slides = [
-    {
-      id: 1,
-      title: 'Film 1',
-      img: 'https://picsum.photos/400/300?random=1'
-    },
-    {
-      id: 2,
-      title: 'Film 2',
-      img: 'https://picsum.photos/400/300?random=2'
-    },
-    {
-      id: 3,
-      title: 'Film 3',
-      img: 'https://picsum.photos/400/300?random=3'
-    },
-    {
-      id: 4,
-      title: 'Film 4',
-      img: 'https://picsum.photos/400/300?random=4'
-    },
-    // ... itd.
-  ];
+  // Po załadowaniu pobieramy listę filmów z backendu
+  useEffect(() => {
+    fetch('http://localhost:3001/api/films')
+      .then((res) => res.json())
+      .then((data) => {
+        setFilms(data);
+      })
+      .catch((err) => console.error('Błąd pobierania filmów:', err));
+  }, []);
+
+  const goToRepertuar = () => {
+    navigate('/repertuar');
+  };
+
+  const goToFilmDetails = (filmId) => {
+    // Możesz mieć np. /film/:id
+    navigate(`/film/${filmId}`);
+  };
 
   return (
     <Box sx={{ mt: 2, px: 2 }}>
@@ -58,7 +57,7 @@ function HomePage() {
         <Typography variant="body1" sx={{ mb: 2 }}>
           Sprawdź nowości i kup bilet już teraz
         </Typography>
-        <Button variant="contained" color="primary">
+        <Button variant="contained" color="primary" onClick={goToRepertuar}>
           Kup bilet
         </Button>
       </Box>
@@ -68,14 +67,22 @@ function HomePage() {
         Nasze filmy
       </Typography>
       <Slider {...settings}>
-        {slides.map((slide) => (
-          <Box key={slide.id} sx={{ px: 1 }}>
-            <img
-              src={slide.img}
-              alt={slide.title}
-              style={{ width: '100%', borderRadius: 8 }}
-            />
-            <Typography variant="subtitle1" textAlign="center">{slide.title}</Typography>
+        {films.map((film) => (
+          <Box key={film.id} sx={{ px: 1 }}>
+            <Box
+              sx={{ position: 'relative', cursor: 'pointer' }}
+              onClick={() => goToFilmDetails(film.id)}
+            >
+              <img
+                src={film.posterUrl || 'https://via.placeholder.com/200x300?text=No+Poster'}
+                alt={film.title}
+                style={{ width: '100%', borderRadius: 8 }}
+              />
+              {/* Możesz dodać overlay z tytułem */}
+            </Box>
+            <Typography variant="subtitle1" textAlign="center" sx={{ mt: 1 }}>
+              {film.title}
+            </Typography>
           </Box>
         ))}
       </Slider>

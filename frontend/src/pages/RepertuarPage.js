@@ -1,66 +1,54 @@
 // frontend/src/pages/RepertuarPage.js
-import React, { useEffect, useState } from 'react';
-import {
-  Container,
-  Typography,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Paper,
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, Grid, Card, CardMedia, CardContent, CardActions, Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 function RepertuarPage() {
-  const [seances, setSeances] = useState([]);
+  const [films, setFilms] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Po załadowaniu komponentu pobieramy seanse
-    fetch('http://localhost:3001/api/seances')
+    fetch('http://localhost:3001/api/films')
       .then((res) => res.json())
-      .then((data) => {
-        setSeances(data);
-      })
-      .catch((err) => {
-        console.error('Error fetching seances:', err);
-      });
+      .then((data) => setFilms(data))
+      .catch((err) => console.error(err));
   }, []);
+
+  const handleBuyTicket = (filmId) => {
+    // Np. przenosimy do /film/:filmId lub /select-seance?filmId=...
+    navigate(`/film/${filmId}`);
+  };
 
   return (
     <Container sx={{ mt: 3 }}>
       <Typography variant="h4" gutterBottom>
-        Repertuar
+        Repertuar - Nasze Filmy
       </Typography>
-      <Paper>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Data</TableCell>
-              <TableCell>Godzina</TableCell>
-              <TableCell>Sala</TableCell>
-              <TableCell>Tytuł filmu</TableCell>
-              <TableCell>Gatunek</TableCell>
-              <TableCell>VIP</TableCell>
-              <TableCell>Normalny</TableCell>
-              <TableCell>Ulgowy</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {seances.map((item) => (
-              <TableRow key={item.seanceId}>
-                <TableCell>{item.date}</TableCell>
-                <TableCell>{item.startTime}</TableCell>
-                <TableCell>{item.roomNumber}</TableCell>
-                <TableCell>{item.title}</TableCell>
-                <TableCell>{item.genre}</TableCell>
-                <TableCell>{item.vipPrice} zł</TableCell>
-                <TableCell>{item.normalPrice} zł</TableCell>
-                <TableCell>{item.discountedPrice} zł</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
+      <Grid container spacing={2}>
+        {films.map((film) => (
+          <Grid item xs={12} sm={6} md={4} key={film.id}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardMedia
+                component="img"
+                image={film.posterUrl || 'https://via.placeholder.com/200x300?text=No+Poster'}
+                alt={film.title}
+                sx={{ height: 300 }}
+              />
+              <CardContent>
+                <Typography variant="h6">{film.title}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Gatunek: {film.genre} | Czas: {film.duration} min
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ mt: 'auto' }}>
+                <Button size="small" onClick={() => handleBuyTicket(film.id)}>
+                  Kup bilet
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
     </Container>
   );
 }
