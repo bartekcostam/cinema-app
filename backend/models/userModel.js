@@ -28,3 +28,25 @@ export const getUserById = async (id) => {
 };
 
 // Możemy dodać np. updateUser, deleteUser, getAllUsers itp. w przyszłości
+export const updateUser = async (id, { firstName, lastName }) => {
+  const db = getDb();
+  await db.run(
+    `UPDATE users
+     SET firstName = ?, lastName = ?
+     WHERE id = ?`,
+    [firstName, lastName, id]
+  );
+};
+export const getAllUsersFromDb = async () => {
+  const db = getDb();
+  const rows = await db.all(`SELECT id, firstName, lastName, email, role FROM users`);
+  return rows;
+};
+export const updateUserAdmin = async (id, { role }) => {
+  const db = getDb();
+  await db.run(`UPDATE users SET role = ? WHERE id = ?`, [role, id]);
+};
+export const deleteUserFromDb = async (id) => {
+  const db = getDb();
+  await db.run(`DELETE FROM users WHERE id = ?`, [id]);
+};

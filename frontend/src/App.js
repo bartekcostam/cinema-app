@@ -8,6 +8,8 @@ import RegisterPage from './pages/RegisterPage';
 import RepertuarPage from './pages/RepertuarPage';
 import SeatSelectionPage from './pages/SeatSelectionPage';
 import FilmDetailsPage from './pages/FilmDetailsPage';
+import TicketPurchasePage from './pages/TicketPurchasePage';
+import PaymentPage from './pages/PaymentPage';
 
 
 // Widoki Użytkownika
@@ -37,9 +39,10 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/repertuar" element={<RepertuarPage />} />
-        <Route path="/seat-selection/:seanceId" element={<SeatSelectionPage />} />
+        <Route path="/select-seance/:seanceId" element={<SeatSelectionPage />} />
         <Route path="/film/:filmId" element={<FilmDetailsPage />} />
-
+        <Route path="/ticket-purchase/:filmId" element={<TicketPurchasePage />} />
+        <Route path="/payment" element={<PaymentPage />} />
         {/* Użytkownik (zalogowany) */}
         <Route 
           path="/user/dashboard"
