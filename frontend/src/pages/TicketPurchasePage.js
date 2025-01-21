@@ -1,4 +1,4 @@
-// frontend/src/pages/TicketPurchasePage.js
+// frontend/src/pages/user/TicketPurchasePage.js
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Button, TextField } from '@mui/material';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -9,12 +9,11 @@ function TicketPurchasePage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Stan dla seansu i filmu
   const [seance, setSeance] = useState(null);
   const [film, setFilm] = useState(null);
 
-  // Stan dla zajętych miejsc
-  const [occupiedSeats, setOccupiedSeats] = useState([]); 
+  // Lista zajętych miejsc w bazie
+  const [occupiedSeats, setOccupiedSeats] = useState([]);
 
   // Wybrane bilety i przekąski
   const [tickets, setTickets] = useState([]);
@@ -28,7 +27,7 @@ function TicketPurchasePage() {
   const [showModal, setShowModal] = useState(false);
   const [modalTicketIndex, setModalTicketIndex] = useState(null);
 
-  // ----- Funkcja do pobierania zajętych miejsc -----
+  // Pobieranie listy zajętych miejsc
   const fetchOccupiedSeats = async () => {
     try {
       console.log('TicketPurchasePage - Fetching occupied seats for seanceId:', seanceId);
@@ -60,14 +59,13 @@ function TicketPurchasePage() {
     }
   };
 
-  // ----- useEffect do pobrania seansu, filmu i stanu z localStorage -----
+  // useEffect do pobrania seansu, filmu i stanu z localStorage
   useEffect(() => {
     if (!seanceId) return;
 
     const fetchSeanceAndFilm = async () => {
       try {
         console.log('TicketPurchasePage - Fetching seance:', seanceId);
-
         const seanceRes = await fetch(`http://localhost:3001/api/seances/${seanceId}`);
         console.log('TicketPurchasePage - Response from /api/seances/:id status:', seanceRes.status);
         if (!seanceRes.ok) throw new Error(`Błąd serwera: ${seanceRes.status}`);
@@ -89,7 +87,7 @@ function TicketPurchasePage() {
     fetchSeanceAndFilm();
     fetchOccupiedSeats();
 
-    // Wczytujemy stan z localStorage (jeśli użytkownik np. przerwał proces)
+    // Wczytujemy stan z localStorage
     const saved = localStorage.getItem('ticketPurchase');
     if (saved) {
       const parsed = JSON.parse(saved);
@@ -99,9 +97,10 @@ function TicketPurchasePage() {
         console.log('TicketPurchasePage - Loaded tickets and snacks from localStorage:', parsed);
       }
     }
-  }, [seanceId]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
+  }, [seanceId]);
 
-  // ----- Zapis aktualnego stanu (bilety, snacki) do localStorage -----
+  // Zapis stanu do localStorage
   const savePurchaseState = () => {
     const obj = {
       seanceId,
@@ -112,7 +111,7 @@ function TicketPurchasePage() {
     console.log('TicketPurchasePage - Saved purchase state to localStorage:', obj);
   };
 
-  // ----- Dodawanie biletu (normal, ulgowy, prezentowy) -----
+  // Dodawanie biletu
   const addTicket = (frontendType) => {
     let backendType = 'normal';
     let basePrice = 25;
@@ -128,7 +127,7 @@ function TicketPurchasePage() {
     console.log(`TicketPurchasePage - Added ticket: type=${backendType}, price=${basePrice}`);
   };
 
-  // ----- Obsługa modala wyboru miejsca -----
+  // Modal do wyboru miejsc
   const openSeatModal = (index) => {
     setModalTicketIndex(index);
     setShowModal(true);
@@ -150,7 +149,7 @@ function TicketPurchasePage() {
     closeSeatModal();
   };
 
-  // ----- Obsługa snacków -----
+  // Obsługa snacków
   const handleSnackChange = (index, quantity) => {
     const updated = [...snacks];
     updated[index].quantity = quantity;
@@ -158,12 +157,12 @@ function TicketPurchasePage() {
     console.log(`TicketPurchasePage - Updated snack ${updated[index].name} quantity to ${quantity}`);
   };
 
-  // ----- Podsumowanie kosztów -----
-  const totalTicketsCost = tickets.reduce((acc, t) => acc + t.price, 0);
-  const totalSnacksCost = snacks.reduce((acc, s) => acc + s.price * s.quantity, 0);
-  const totalCost = totalTicketsCost + totalSnacksCost;
+  // Podsumowanie kosztów (z formatowaniem do 2 miejsc po przecinku)
+  const totalTicketsCostNumber = tickets.reduce((acc, t) => acc + t.price, 0);
+  const totalSnacksCostNumber = snacks.reduce((acc, s) => acc + (s.price * s.quantity), 0);
+  const totalCostNumber = totalTicketsCostNumber + totalSnacksCostNumber;
 
-  // ----- Rezerwacja (POST /api/tickets) -----
+  // Rezerwacja (POST /api/tickets)
   const handleReservation = async () => {
     console.log('TicketPurchasePage - handleReservation wywołane');
     const token = localStorage.getItem('token');
@@ -206,8 +205,6 @@ function TicketPurchasePage() {
       // czyścimy localStorage
       localStorage.removeItem('ticketPurchase');
       console.log('TicketPurchasePage - Removed ticketPurchase from localStorage');
-
-      // Przekierowanie np. do /payment
       navigate('/payment');
 
       // odśwież zajęte miejsca
@@ -218,7 +215,7 @@ function TicketPurchasePage() {
     }
   };
 
-  // ----- Płatność (też POST /api/tickets, żeby faktycznie utworzyć bilety) -----
+  // Płatność (też POST /api/tickets, żeby faktycznie utworzyć bilety)
   const handlePayment = async () => {
     console.log('TicketPurchasePage - handlePayment wywołane');
     const token = localStorage.getItem('token');
@@ -236,7 +233,6 @@ function TicketPurchasePage() {
     console.log('TicketPurchasePage - Payload tickets (payment path):', payloadTickets);
 
     try {
-      // Tak samo wysyłamy do /api/tickets
       const res = await fetch('http://localhost:3001/api/tickets', {
         method: 'POST',
         headers: {
@@ -273,14 +269,12 @@ function TicketPurchasePage() {
     }
   };
 
-  // ---- Render ----
-  // Jeśli seans się jeszcze nie pobrał, pokazujemy np. "Ładowanie..."
   if (!seance) {
     return <div>Ładowanie seansu...</div>;
   }
 
   return (
-    <Container sx={{ mt: 3 }}>
+    <Container maxWidth="md" sx={{ mt: 3, mb: 3, px: 3 }}>
       {film && (
         <>
           <Typography variant="h4" gutterBottom>
@@ -299,9 +293,8 @@ function TicketPurchasePage() {
             <Box>
               <Typography>Gatunek: {film.genre}</Typography>
               <Typography>Czas trwania: {film.duration} min</Typography>
-              {/* Można też wyświetlić dane seansu */}
               <Typography>Data seansu: {seance.date}</Typography>
-              <Typography>Godzina rozpoczęcia: {seance.startTime}</Typography>
+              <Typography>Godzina: {seance.startTime}</Typography>
               <Typography>Sala: {seance.roomNumber}</Typography>
             </Box>
           </Box>
@@ -327,7 +320,7 @@ function TicketPurchasePage() {
         {tickets.map((ticket, index) => (
           <Box key={index} sx={{ display: 'flex', gap: 2, mb: 1 }}>
             <Typography>
-              Bilet: {ticket.type} – Cena: {ticket.price} zł
+              Bilet: {ticket.type} – Cena: {ticket.price.toFixed(2)} zł
               {ticket.seat ? ` (Miejsce: ${ticket.seat})` : ''}
             </Typography>
             <Button variant="text" onClick={() => openSeatModal(index)}>
@@ -337,8 +330,15 @@ function TicketPurchasePage() {
         ))}
       </Box>
 
-      {/* Snacki */}
-      <Box sx={{ mt: 3 }}>
+      {/* Sekcja z przekąskami - delikatnie inne tło */}
+      <Box
+        sx={{
+          mt: 3,
+          p: 2,
+          backgroundColor: '#f8f8f8',
+          borderRadius: 2
+        }}
+      >
         <Typography variant="h6" gutterBottom>Dodaj przekąski:</Typography>
         {snacks.map((snack, i) => (
           <Box key={snack.name} sx={{ display: 'flex', gap: 2, mb: 1 }}>
@@ -358,17 +358,17 @@ function TicketPurchasePage() {
         ))}
       </Box>
 
-      {/* Podsumowanie */}
+      {/* Podsumowanie z 2 miejscami po przecinku */}
       <Box sx={{ mt: 3 }}>
-        <Typography>Suma za bilety: {totalTicketsCost} zł</Typography>
-        <Typography>Suma za snacki: {totalSnacksCost} zł</Typography>
+        <Typography>Suma za bilety: {totalTicketsCostNumber.toFixed(2)} zł</Typography>
+        <Typography>Suma za snacki: {totalSnacksCostNumber.toFixed(2)} zł</Typography>
         <Typography variant="h5" sx={{ mt: 1 }}>
-          Razem do zapłaty: {totalCost} zł
+          Razem do zapłaty: {totalCostNumber.toFixed(2)} zł
         </Typography>
       </Box>
 
-      {/* Przyciski akcji */}
-      <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+      {/* Przyciski akcji (mb:3 aby nie kleiło się do dołu) */}
+      <Box sx={{ display: 'flex', gap: 2, mt: 2, mb: 3 }}>
         <Button variant="contained" onClick={handleReservation}>
           Zarezerwuj
         </Button>

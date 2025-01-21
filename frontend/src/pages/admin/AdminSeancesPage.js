@@ -287,9 +287,9 @@ function AdminSeancesPage() {
                 <>
                   <TableCell>{s.date}</TableCell>
                   <TableCell>{s.startTime}</TableCell>
-                  <TableCell>{s.vipPrice}</TableCell>
-                  <TableCell>{s.normalPrice}</TableCell>
-                  <TableCell>{s.discountedPrice}</TableCell>
+                  <TableCell>{s.vipPrice.toFixed(2)}</TableCell>
+                  <TableCell>{s.normalPrice.toFixed(2)}</TableCell>
+                  <TableCell>{s.discountedPrice.toFixed(2)}</TableCell>
                   <TableCell>
                     <Button variant="outlined" onClick={() => startEdit(s)}>
                       Edytuj

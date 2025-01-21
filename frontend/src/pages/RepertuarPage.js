@@ -1,3 +1,5 @@
+// frontend/src/pages/RepertuarPage.js
+
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Grid, Card, CardMedia, CardContent, CardActions, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -19,14 +21,24 @@ function RepertuarPage() {
   };
 
   return (
-    <Container sx={{ mt: 3 }}>
+    <Container sx={{ mt: 3, mb: 3 }}>
       <Typography variant="h4" gutterBottom>
         Repertuar - Nasze Filmy
       </Typography>
       <Grid container spacing={2}>
         {films.map((film) => (
           <Grid item xs={12} sm={6} md={4} key={film.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Card
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'transform 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)'
+                }
+              }}
+            >
               <CardMedia
                 component="img"
                 image={film.posterUrl || 'https://via.placeholder.com/200x300?text=No+Poster'}

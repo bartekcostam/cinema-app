@@ -183,7 +183,7 @@ function AdminSnacksPage() {
                     }
                   />
                 ) : (
-                  `${snack.price} zł`
+                  `${snack.price.toFixed(2)} zł`
                 )}
               </TableCell>
               <TableCell>

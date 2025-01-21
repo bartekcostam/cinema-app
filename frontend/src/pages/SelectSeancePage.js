@@ -1,6 +1,8 @@
+// frontend/src/pages/SelectSeancePage.js
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Typography, List, ListItem, Button } from '@mui/material';
+import { Container, Typography, Box, Button } from '@mui/material';
 
 function SelectSeancePage() {
   const { filmId } = useParams();
@@ -9,7 +11,7 @@ function SelectSeancePage() {
 
   useEffect(() => {
     if (!filmId) return;
-    // Pobieramy seanse danego filmu
+
     fetch(`http://localhost:3001/api/seances?filmId=${filmId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -18,31 +20,44 @@ function SelectSeancePage() {
       .catch((err) => console.error('Error:', err));
   }, [filmId]);
 
-  // Tutaj kluczowe, by param do "ticket-purchase" był ID seansu (np. s.seanceId)
   const handleSeanceClick = (seanceId) => {
     navigate(`/ticket-purchase/${seanceId}`);
   };
 
   return (
-    <Container sx={{ mt: 3 }}>
+    <Container sx={{ mt: 3, mb: 3 }}>
       <Typography variant="h4" gutterBottom>
         Wybierz seans
       </Typography>
-      <List>
-        {seances.map((s) => (
-          <ListItem
-            key={s.seanceId} 
-            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'start' }}
-          >
-            <Typography variant="subtitle1">
-              {s.date} | {s.startTime} | Sala {s.roomNumber}
+
+      {seances.map((s) => (
+        <Box
+          key={s.seanceId}
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            p: 2,
+            mb: 1,
+            backgroundColor: '#f5f5f5',
+            borderRadius: 2,
+            transition: 'background-color 0.3s',
+            '&:hover': {
+              backgroundColor: '#e0e0e0'
+            }
+          }}
+        >
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+              {s.date} | {s.startTime}
             </Typography>
-            <Button variant="contained" onClick={() => handleSeanceClick(s.seanceId)}>
-              Wybierz
-            </Button>
-          </ListItem>
-        ))}
-      </List>
+            <Typography>Sala {s.roomNumber}</Typography>
+          </Box>
+          <Button variant="contained" onClick={() => handleSeanceClick(s.seanceId)}>
+            Wybierz
+          </Button>
+        </Box>
+      ))}
     </Container>
   );
 }
