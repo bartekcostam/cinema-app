@@ -1,4 +1,3 @@
-// frontend/src/pages/RepertuarPage.js
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Grid, Card, CardMedia, CardContent, CardActions, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +14,7 @@ function RepertuarPage() {
   }, []);
 
   const handleBuyTicket = (filmId) => {
-    // Np. przenosimy do /film/:filmId lub /select-seance?filmId=...
+    // Przejście do strony szczegółów filmu
     navigate(`/film/${filmId}`);
   };
 

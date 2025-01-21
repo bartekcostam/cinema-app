@@ -1,4 +1,3 @@
-// frontend/src/pages/FilmDetailsPage.js
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Typography, Button, Box } from '@mui/material';
@@ -9,6 +8,7 @@ function FilmDetailsPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Pobieramy info o filmie
     fetch(`http://localhost:3001/api/films/${filmId}`)
       .then((res) => res.json())
       .then((data) => setFilm(data))
@@ -16,8 +16,7 @@ function FilmDetailsPage() {
   }, [filmId]);
 
   const handleBuyTicket = () => {
-    // Np. przenosimy do /select-seance?filmId=...
-    // lub /repertuar z filtrem
+    // Przechodzimy do widoku seansów dla danego filmu
     navigate(`/select-seance/${filmId}`);
   };
 

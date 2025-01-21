@@ -1,42 +1,63 @@
 // frontend/src/pages/user/UserReservationsPage.js
-import React, { useEffect, useState } from 'react';
-import { Container, Typography, Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, Box } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 function UserReservationsPage() {
   const [reservations, setReservations] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // fetch GET /api/tickets?userId=...
-    // setReservations(response)
-  }, []);
+    const fetchReservations = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:3001/api/tickets/my', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Błąd serwera: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Rezerwacje użytkownika:', data);
+        setReservations(data);
+      } catch (error) {
+        console.error('Błąd przy pobieraniu rezerwacji:', error);
+        alert('Nie udało się pobrać rezerwacji.');
+      }
+    };
+
+    fetchReservations();
+  }, [navigate]);
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h5" gutterBottom>
-        Moje rezerwacje
+    <Container>
+      <Typography variant="h4" gutterBottom>
+        Twoje Rezerwacje
       </Typography>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Seans</TableCell>
-            <TableCell>Miejsca</TableCell>
-            <TableCell>Data</TableCell>
-            <TableCell>Godzina</TableCell>
-            <TableCell>Status</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {reservations.map((res) => (
-            <TableRow key={res.id}>
-              <TableCell>{res.filmTitle}</TableCell>
-              <TableCell>{res.seatNumbers?.join(', ')}</TableCell>
-              <TableCell>{res.date}</TableCell>
-              <TableCell>{res.startTime}</TableCell>
-              <TableCell>{res.status}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      {reservations.length === 0 ? (
+        <Typography>Nie masz żadnych rezerwacji.</Typography>
+      ) : (
+        reservations.map(reservation => (
+          <Box key={reservation.id} sx={{ mb: 2, p: 2, border: '1px solid #ccc' }}>
+            <Typography variant="h6">{reservation.filmTitle}</Typography>
+            <Typography>Data: {reservation.date}</Typography>
+            <Typography>Godzina: {reservation.startTime}</Typography>
+            <Typography>Numer Miejsca: {reservation.seatNumber}</Typography>
+            <Typography>Typ Biletu: {reservation.ticketType}</Typography>
+            <Typography>Cena: {reservation.price} zł</Typography>
+            <Typography>Status: {reservation.status}</Typography>
+          </Box>
+        ))
+      )}
     </Container>
   );
 }

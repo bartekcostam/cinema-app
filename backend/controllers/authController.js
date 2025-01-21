@@ -1,3 +1,4 @@
+// backend/controllers/authController.js
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { createUser, getUserByEmail } from '../models/userModel.js';
@@ -5,70 +6,95 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'test123'; // do .env
+const JWT_SECRET = process.env.JWT_SECRET || 'test123'; // Powinieneś ustawić to w pliku .env
 
-// [POST] /api/auth/register
+/**
+ * POST /api/auth/register
+ * Rejestruje nowego użytkownika.
+ */
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    // Sprawdź, czy email już istnieje
-    const existingUser = await getUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ error: 'Użytkownik o takim email już istnieje' });
+    // Podstawowa walidacja
+    if (!firstName || !lastName || !email || !password) {
+      console.log('register - Brak wymaganych pól');
+      return res.status(400).json({ error: 'Wszystkie pola są wymagane' });
     }
 
-    // Hash hasła
+    // Sprawdzenie, czy email już istnieje
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
+      console.log('register - Email już w użyciu:', email);
+      return res.status(400).json({ error: 'Email już w użyciu' });
+    }
+
+    // Hashowanie hasła
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Utwórz użytkownika
+    // Tworzenie użytkownika
     const userId = await createUser({
       firstName,
       lastName,
       email,
       password: hashedPassword,
-      role: 'user', // domyślnie
+      role: 'user', // Domyślna rola
     });
 
-    return res.status(201).json({
-      message: 'Konto zostało utworzone pomyślnie',
+    console.log('register - Utworzono użytkownika z id:', userId);
+
+    res.status(201).json({
+      message: 'Użytkownik zarejestrowany pomyślnie',
       userId,
     });
   } catch (error) {
-    console.error('Register error:', error);
-    return res.status(500).json({ error: 'Błąd serwera' });
+    console.error('register error:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas rejestracji' });
   }
 };
 
-// [POST] /api/auth/login
+/**
+ * POST /api/auth/login
+ * Loguje użytkownika.
+ */
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Znajdź usera w bazie
+    // Podstawowa walidacja
+    if (!email || !password) {
+      console.log('login - Brak email lub hasła');
+      return res.status(400).json({ error: 'Email i hasło są wymagane' });
+    }
+
+    // Znalezienie użytkownika po emailu
     const user = await getUserByEmail(email);
     if (!user) {
+      console.log('login - Użytkownik nie znaleziony:', email);
       return res.status(401).json({ error: 'Nieprawidłowy email lub hasło' });
     }
 
-    // Porównaj zahashowane hasła
+    // Porównanie haseł
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log('login - Nieprawidłowe hasło dla użytkownika:', email);
       return res.status(401).json({ error: 'Nieprawidłowy email lub hasło' });
     }
 
-    // Stwórz token (JWT)
+    // Tworzenie tokena JWT
     const token = jwt.sign(
       {
         userId: user.id,
         role: user.role,
       },
       JWT_SECRET,
-      { expiresIn: '1h' } // token ważny 1 godzinę
+      { expiresIn: '1h' } // Token ważny przez 1 godzinę
     );
 
-    return res.json({
+    console.log('login - Użytkownik zalogowany:', email);
+
+    res.json({
       message: 'Zalogowano pomyślnie',
       token,
       user: {
@@ -80,7 +106,7 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({ error: 'Błąd serwera' });
+    console.error('login error:', error);
+    res.status(500).json({ error: 'Błąd serwera podczas logowania' });
   }
 };

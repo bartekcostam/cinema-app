@@ -1,4 +1,3 @@
-// frontend/src/pages/HomePage.js
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -36,57 +35,74 @@ function HomePage() {
   };
 
   const goToFilmDetails = (filmId) => {
-    // Możesz mieć np. /film/:id
     navigate(`/film/${filmId}`);
   };
 
   return (
-    <Box sx={{ mt: 2, px: 2 }}>
-      {/* Sekcja baneru */}
-      <Box
-        sx={{
-          backgroundColor: '#f5f5f5',
-          p: 4,
-          textAlign: 'center',
-          mb: 2,
-        }}
-      >
-        <Typography variant="h4" gutterBottom>
-          Witamy w naszym Kinie!
+    <>
+      <Box sx={{ mt: 2, px: 2 }}>
+        {/* Sekcja baneru */}
+        <Box
+          sx={{
+            backgroundColor: '#f5f5f5',
+            p: 4,
+            textAlign: 'center',
+            mb: 2,
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h4" gutterBottom>
+            Witamy w naszym Kinie!
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            Sprawdź nowości i kup bilet już teraz
+          </Typography>
+          <Button variant="contained" color="primary" onClick={goToRepertuar}>
+            Kup bilet
+          </Button>
+        </Box>
+
+        {/* Sekcja karuzeli filmów */}
+        <Typography variant="h5" gutterBottom>
+          Nasze filmy
         </Typography>
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          Sprawdź nowości i kup bilet już teraz
-        </Typography>
-        <Button variant="contained" color="primary" onClick={goToRepertuar}>
-          Kup bilet
-        </Button>
+        <Slider {...settings}>
+          {films.map((film) => (
+            <Box key={film.id} sx={{ px: 1 }}>
+              <Box
+                sx={{ position: 'relative', cursor: 'pointer' }}
+                onClick={() => goToFilmDetails(film.id)}
+              >
+                <img
+                  src={film.posterUrl || 'https://via.placeholder.com/200x300?text=No+Poster'}
+                  alt={film.title}
+                  style={{ width: '100%', borderRadius: 8 }}
+                />
+              </Box>
+              <Typography variant="subtitle1" textAlign="center" sx={{ mt: 1 }}>
+                {film.title}
+              </Typography>
+            </Box>
+          ))}
+        </Slider>
       </Box>
 
-      {/* Sekcja karuzeli filmów */}
-      <Typography variant="h5" gutterBottom>
-        Nasze filmy
-      </Typography>
-      <Slider {...settings}>
-        {films.map((film) => (
-          <Box key={film.id} sx={{ px: 1 }}>
-            <Box
-              sx={{ position: 'relative', cursor: 'pointer' }}
-              onClick={() => goToFilmDetails(film.id)}
-            >
-              <img
-                src={film.posterUrl || 'https://via.placeholder.com/200x300?text=No+Poster'}
-                alt={film.title}
-                style={{ width: '100%', borderRadius: 8 }}
-              />
-              {/* Możesz dodać overlay z tytułem */}
-            </Box>
-            <Typography variant="subtitle1" textAlign="center" sx={{ mt: 1 }}>
-              {film.title}
-            </Typography>
-          </Box>
-        ))}
-      </Slider>
-    </Box>
+      {/* STOPKA na dole strony */}
+      <Box
+        component="footer"
+        sx={{
+          mt: 4,
+          py: 2,
+          backgroundColor: '#222',
+          color: '#fff',
+          textAlign: 'center'
+        }}
+      >
+        <Typography variant="body2">
+          © {new Date().getFullYear()} Cinema App. Wszelkie prawa zastrzeżone.
+        </Typography>
+      </Box>
+    </>
   );
 }
 

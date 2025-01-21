@@ -11,33 +11,54 @@ import {
 
 function SeatSelectionPage() {
   const { seanceId } = useParams();
-
-  // Dane o seansie
   const [seance, setSeance] = useState(null);
-  // Miejsca zajęte
   const [occupiedSeats, setOccupiedSeats] = useState([]);
-  // Miejsca wybrane przez usera
   const [selectedSeats, setSelectedSeats] = useState([]);
 
   useEffect(() => {
-    // 1) Pobierz dane seansu (z salą i layoutem)
+    fetchSeance();
+    fetchOccupiedSeats();
+    // eslint-disable-next-line
+  }, [seanceId]);
+
+  const fetchSeance = () => {
     fetch(`http://localhost:3001/api/seances/${seanceId}`)
       .then((res) => res.json())
       .then((data) => {
         setSeance(data);
-        // 2) Pobierz zajęte miejsca
-        return fetch(`http://localhost:3001/api/tickets?seanceId=${seanceId}`);
-      })
-      .then((res) => res.json())
-      .then((tickets) => {
-        const occ = tickets.map((t) => t.seatNumber);
-        setOccupiedSeats(occ);
       })
       .catch((err) => console.error(err));
-  }, [seanceId]);
+  };
+
+  const fetchOccupiedSeats = () => {
+    const token = localStorage.getItem('token');
+    console.log('SeatSelectionPage.js - Pobieram zajęte miejsca z /api/tickets z tokenem:', token);
+
+    fetch(`http://localhost:3001/api/tickets?seanceId=${seanceId}`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : ''
+      }
+    })
+      .then((res) => {
+        console.log('SeatSelectionPage.js - Odpowiedź /api/tickets?seanceId= status:', res.status);
+        return res.json();
+      })
+      .then((tickets) => {
+        console.log('SeatSelectionPage.js - Dane biletów (zajęte miejsca):', tickets);
+        if (Array.isArray(tickets)) {
+          const occ = tickets.map((t) => t.seatNumber);
+          setOccupiedSeats(occ);
+        } else {
+          console.warn('SeatSelectionPage.js - Błąd pobierania zajętych miejsc:', tickets);
+        }
+      })
+      .catch((error) => {
+        console.error('SeatSelectionPage.js - Błąd fetchOccupiedSeats:', error);
+      });
+  };
 
   const handleSeatClick = (seatId) => {
-    if (occupiedSeats.includes(seatId)) return;
+    if (occupiedSeats.includes(seatId)) return; // zablokuj klik na zajęte
     if (selectedSeats.includes(seatId)) {
       setSelectedSeats((prev) => prev.filter((s) => s !== seatId));
     } else {
@@ -46,51 +67,22 @@ function SeatSelectionPage() {
   };
 
   const handleReservation = () => {
-    const token = localStorage.getItem('token');
-    fetch('http://localhost:3001/api/tickets', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        seanceId,
-        tickets: selectedSeats.map((seat) => ({
-          seatNumber: seat,
-          // tu logika do ticketType, np. sprawdzamy czy row jest VIP itp.
-          ticketType: 'normal'
-        }))
-      })
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Rezerwacja nie powiodła się');
-        return res.json();
-      })
-      .then((data) => {
-        alert(data.message || 'Zarezerwowano!');
-      })
-      .catch((err) => alert(err.message));
+    alert('Tutaj logika rezerwacji z osobnej strony SeatSelectionPage...');
   };
 
-  if (!seance) {
-    return <div>Ładowanie...</div>;
-  }
+  if (!seance) return <div>Ładowanie...</div>;
 
-  // W seance mamy: roomId, rowsCount, colsCount, layout (JSON), ...
-  const { roomId, roomNumber, rowsCount, colsCount, layout } = seance;
-
-  // layout może zawierać np. { "vipRows": [7,8], "frontRows": [1,2] }
+  const { roomNumber, rowsCount, colsCount, layout } = seance;
   let parsedLayout = {};
   try {
     parsedLayout = layout ? JSON.parse(layout) : {};
   } catch (err) {
-    console.error('Error parsing room layout:', err);
+    console.error('Error parsing layout:', err);
   }
 
   const vipRows = parsedLayout.vipRows || [];
   const frontRows = parsedLayout.frontRows || [];
 
-  // Generujemy siatkę
   const seats = [];
   for (let r = 1; r <= rowsCount; r++) {
     const rowElements = [];
@@ -102,10 +94,10 @@ function SeatSelectionPage() {
       const isFront = frontRows.includes(r);
 
       let bg = '#ccc';
-      if (isVIP) bg = '#ffb74d'; // VIP
-      if (isFront) bg = '#81d4fa'; // front
-      if (isOccupied) bg = '#e0e0e0';
-      if (isSelected) bg = '#66bb6a';
+      if (isVIP) bg = '#ffb74d';  // VIP (pomarańcz)
+      if (isFront) bg = '#81d4fa'; // front (jasny niebieski)
+      if (isOccupied) bg = '#e57373'; // czerwony odcień na zajęte
+      if (isSelected) bg = '#66bb6a'; // zielony na wybrane
 
       rowElements.push(
         <Tooltip
@@ -115,11 +107,11 @@ function SeatSelectionPage() {
           <Box
             onClick={() => handleSeatClick(seatId)}
             sx={{
-              width: 24, height: 24,
+              width: 24,
+              height: 24,
               m: 0.5,
               backgroundColor: bg,
               cursor: isOccupied ? 'not-allowed' : 'pointer',
-              transition: 'transform 0.2s',
               '&:hover': {
                 transform: isOccupied ? 'none' : 'scale(1.1)'
               }
@@ -138,7 +130,7 @@ function SeatSelectionPage() {
   return (
     <Container sx={{ mt: 3 }}>
       <Typography variant="h5" gutterBottom>
-        Sala {roomNumber} – Seans {seance.date} {seance.startTime}
+        Sala {roomNumber}
       </Typography>
       <Box sx={{ textAlign: 'center', mb: 2 }}>
         <Box

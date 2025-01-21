@@ -1,6 +1,5 @@
-// frontend/src/pages/LoginPage.js
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -13,6 +12,10 @@ import {
 function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Po zalogowaniu wracamy do 'from' (jeśli istniał) lub domyślnego panelu
+  const from = location.state?.from?.pathname || null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,7 +37,13 @@ function LoginPage() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.user.role);
 
-        // Przekierowanie zależne od roli:
+        // Jeśli mamy "from", wracamy tam
+        if (from) {
+          navigate(from, { replace: true });
+          return;
+        }
+
+        // Jeśli nie mamy "from", przekierowanie zależne od roli:
         if (data.user.role === 'admin') {
           navigate('/admin/dashboard');
         } else {

@@ -5,14 +5,18 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import SeatSelectionModal from './components/SeatSelectionModal';
 
 function TicketPurchasePage() {
-  const { filmId } = useParams();
+  const { seanceId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation(); // aby wiedzieć, skąd przychodzi user
+  const location = useLocation();
 
-  // Film info
+  // Stan dla seansu i filmu
+  const [seance, setSeance] = useState(null);
   const [film, setFilm] = useState(null);
 
-  // tickets: np. { type: 'normal'|'discounted'|'VIP', seat: '4-10', price: 25 }
+  // Stan dla zajętych miejsc
+  const [occupiedSeats, setOccupiedSeats] = useState([]); 
+
+  // Wybrane bilety i przekąski
   const [tickets, setTickets] = useState([]);
   const [snacks, setSnacks] = useState([
     { name: 'Popcorn', price: 10, quantity: 0 },
@@ -20,42 +24,95 @@ function TicketPurchasePage() {
     { name: 'Hot-dog', price: 12, quantity: 0 },
   ]);
 
+  // Modal do wyboru miejsc
   const [showModal, setShowModal] = useState(false);
   const [modalTicketIndex, setModalTicketIndex] = useState(null);
 
-  // Po wejściu na stronę, sprawdzamy czy jest w localStorage stan "ticketPurchase"
-  useEffect(() => {
-    // ewentualnie pobierz dane filmu z backendu:
-    setFilm({
-      id: filmId,
-      title: 'Przykładowy Film',
-      duration: 120,
-      genre: 'Akcja',
-      posterUrl: 'https://via.placeholder.com/200x300?text=Poster'
-    });
+  // ----- Funkcja do pobierania zajętych miejsc -----
+  const fetchOccupiedSeats = async () => {
+    try {
+      console.log('TicketPurchasePage - Fetching occupied seats for seanceId:', seanceId);
+      const token = localStorage.getItem('token');
+      console.log('TicketPurchasePage - token (do pobierania zajętych miejsc):', token);
 
+      const ticketsRes = await fetch(`http://localhost:3001/api/tickets?seanceId=${seanceId}`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : ''
+        }
+      });
+      console.log('TicketPurchasePage - Response from /api/tickets?seanceId=:', ticketsRes.status);
+
+      if (!ticketsRes.headers.get('Content-Type')?.includes('application/json')) {
+        throw new Error('Odpowiedź nie jest w formacie JSON');
+      }
+      const ticketsData = await ticketsRes.json();
+      console.log('TicketPurchasePage - Tickets data:', ticketsData);
+
+      if (Array.isArray(ticketsData)) {
+        const seats = ticketsData.map((t) => t.seatNumber);
+        console.log('TicketPurchasePage - Occupied seats:', seats);
+        setOccupiedSeats(seats);
+      } else {
+        console.warn('TicketPurchasePage - Błąd pobierania zajętych miejsc:', ticketsData);
+      }
+    } catch (err) {
+      console.error('TicketPurchasePage - Błąd pobierania zajętych miejsc:', err);
+    }
+  };
+
+  // ----- useEffect do pobrania seansu, filmu i stanu z localStorage -----
+  useEffect(() => {
+    if (!seanceId) return;
+
+    const fetchSeanceAndFilm = async () => {
+      try {
+        console.log('TicketPurchasePage - Fetching seance:', seanceId);
+
+        const seanceRes = await fetch(`http://localhost:3001/api/seances/${seanceId}`);
+        console.log('TicketPurchasePage - Response from /api/seances/:id status:', seanceRes.status);
+        if (!seanceRes.ok) throw new Error(`Błąd serwera: ${seanceRes.status}`);
+        const seanceData = await seanceRes.json();
+        console.log('TicketPurchasePage - Seance data:', seanceData);
+        setSeance(seanceData);
+
+        const filmRes = await fetch(`http://localhost:3001/api/films/${seanceData.filmId}`);
+        console.log('TicketPurchasePage - Response from /api/films/:id status:', filmRes.status);
+        if (!filmRes.ok) throw new Error(`Błąd serwera: ${filmRes.status}`);
+        const filmData = await filmRes.json();
+        console.log('TicketPurchasePage - Film data:', filmData);
+        setFilm(filmData);
+      } catch (err) {
+        console.error('Błąd pobierania seansu/filmu:', err);
+      }
+    };
+
+    fetchSeanceAndFilm();
+    fetchOccupiedSeats();
+
+    // Wczytujemy stan z localStorage (jeśli użytkownik np. przerwał proces)
     const saved = localStorage.getItem('ticketPurchase');
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Upewnij się, że filmId się zgadza. Jeśli tak, wczytaj stan:
-      if (parsed.filmId === filmId) {
+      if (parsed.seanceId === seanceId) {
         setTickets(parsed.tickets || []);
         setSnacks(parsed.snacks || []);
+        console.log('TicketPurchasePage - Loaded tickets and snacks from localStorage:', parsed);
       }
     }
-  }, [filmId]);
+  }, [seanceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Funkcja zapisująca do localStorage
+  // ----- Zapis aktualnego stanu (bilety, snacki) do localStorage -----
   const savePurchaseState = () => {
     const obj = {
-      filmId,
+      seanceId,
       tickets,
       snacks
     };
     localStorage.setItem('ticketPurchase', JSON.stringify(obj));
+    console.log('TicketPurchasePage - Saved purchase state to localStorage:', obj);
   };
 
-  // Dodanie biletu
+  // ----- Dodawanie biletu (normal, ulgowy, prezentowy) -----
   const addTicket = (frontendType) => {
     let backendType = 'normal';
     let basePrice = 25;
@@ -68,55 +125,61 @@ function TicketPurchasePage() {
       basePrice = 30;
     }
     setTickets((prev) => [...prev, { type: backendType, seat: null, price: basePrice }]);
+    console.log(`TicketPurchasePage - Added ticket: type=${backendType}, price=${basePrice}`);
   };
 
-  // Modal
+  // ----- Obsługa modala wyboru miejsca -----
   const openSeatModal = (index) => {
     setModalTicketIndex(index);
     setShowModal(true);
+    console.log(`TicketPurchasePage - Opening seat modal for ticket index: ${index}`);
   };
   const closeSeatModal = () => {
     setShowModal(false);
     setModalTicketIndex(null);
+    console.log('TicketPurchasePage - Closing seat modal');
   };
   const handleSeatSelected = (seatInfo) => {
     const updated = [...tickets];
     updated[modalTicketIndex].seat = seatInfo.seatId;
     if (seatInfo.isVip) {
-      updated[modalTicketIndex].price *= 2;
+      updated[modalTicketIndex].price += 5;
     }
     setTickets(updated);
+    console.log(`TicketPurchasePage - Selected seat for ticket index ${modalTicketIndex}:`, seatInfo);
     closeSeatModal();
   };
 
-  // Snacki
+  // ----- Obsługa snacków -----
   const handleSnackChange = (index, quantity) => {
     const updated = [...snacks];
     updated[index].quantity = quantity;
     setSnacks(updated);
+    console.log(`TicketPurchasePage - Updated snack ${updated[index].name} quantity to ${quantity}`);
   };
 
-  // Podsumowanie
+  // ----- Podsumowanie kosztów -----
   const totalTicketsCost = tickets.reduce((acc, t) => acc + t.price, 0);
   const totalSnacksCost = snacks.reduce((acc, s) => acc + s.price * s.quantity, 0);
   const totalCost = totalTicketsCost + totalSnacksCost;
 
-  // Rezerwacja (wymusza logowanie)
+  // ----- Rezerwacja (POST /api/tickets) -----
   const handleReservation = async () => {
+    console.log('TicketPurchasePage - handleReservation wywołane');
     const token = localStorage.getItem('token');
     if (!token) {
-      // user nie jest zalogowany, zapisz stan i przekieruj do /login
+      // niezalogowany -> zapisz stan i przekieruj do logowania
       savePurchaseState();
+      console.log('TicketPurchasePage - Nie zalogowany, przekierowanie do logowania');
       navigate('/login', { state: { from: location } });
       return;
     }
 
-    // Mając token → POST /api/tickets
-    const seanceId = 1;
     const payloadTickets = tickets.map((t) => ({
       seatNumber: t.seat,
       ticketType: t.type
     }));
+    console.log('TicketPurchasePage - Payload tickets:', payloadTickets);
 
     try {
       const res = await fetch('http://localhost:3001/api/tickets', {
@@ -130,31 +193,91 @@ function TicketPurchasePage() {
           tickets: payloadTickets
         })
       });
-      if (!res.ok) throw new Error('Rezerwacja nie powiodła się');
+      console.log('TicketPurchasePage - Response status from /api/tickets:', res.status);
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('TicketPurchasePage - Error response:', errorData);
+        throw new Error(errorData.error || 'Rezerwacja nie powiodła się');
+      }
       const data = await res.json();
+      console.log('TicketPurchasePage - Reservation response:', data);
       alert(data.message || 'Rezerwacja OK!');
 
-      // Po rezerwacji możesz usunąć stan z localStorage
+      // czyścimy localStorage
       localStorage.removeItem('ticketPurchase');
-      // Przechodzimy do payment
+      console.log('TicketPurchasePage - Removed ticketPurchase from localStorage');
+
+      // Przekierowanie np. do /payment
       navigate('/payment');
+
+      // odśwież zajęte miejsca
+      await fetchOccupiedSeats();
     } catch (err) {
+      console.error('TicketPurchasePage - handleReservation error:', err);
       alert(err.message);
     }
   };
 
-  // Przycisk "Zapłać" - np. skip rezerwacja? (Możesz dostosować logikę)
-  const handlePayment = () => {
-    // Również sprawdź logowanie, zapisz stan, ...
+  // ----- Płatność (też POST /api/tickets, żeby faktycznie utworzyć bilety) -----
+  const handlePayment = async () => {
+    console.log('TicketPurchasePage - handlePayment wywołane');
     const token = localStorage.getItem('token');
     if (!token) {
       savePurchaseState();
+      console.log('TicketPurchasePage - Nie zalogowany, przekierowanie do logowania');
       navigate('/login', { state: { from: location } });
       return;
     }
 
-    navigate('/payment');
+    const payloadTickets = tickets.map((t) => ({
+      seatNumber: t.seat,
+      ticketType: t.type
+    }));
+    console.log('TicketPurchasePage - Payload tickets (payment path):', payloadTickets);
+
+    try {
+      // Tak samo wysyłamy do /api/tickets
+      const res = await fetch('http://localhost:3001/api/tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          seanceId,
+          tickets: payloadTickets
+        })
+      });
+      console.log('TicketPurchasePage - Response status from /api/tickets (payment):', res.status);
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('TicketPurchasePage - handlePayment error response:', errorData);
+        throw new Error(errorData.error || 'Nie można kupić biletów');
+      }
+      const data = await res.json();
+      console.log('TicketPurchasePage - handlePayment reservation response:', data);
+      alert(data.message || 'Rezerwacja OK!');
+
+      // Czyścimy localStorage
+      localStorage.removeItem('ticketPurchase');
+      console.log('TicketPurchasePage - Removed ticketPurchase from localStorage (payment)');
+
+      // Przechodzimy do /payment
+      navigate('/payment');
+
+      // odśwież zajęte miejsca
+      await fetchOccupiedSeats();
+    } catch (err) {
+      console.error('TicketPurchasePage - handlePayment error:', err);
+      alert(err.message);
+    }
   };
+
+  // ---- Render ----
+  // Jeśli seans się jeszcze nie pobrał, pokazujemy np. "Ładowanie..."
+  if (!seance) {
+    return <div>Ładowanie seansu...</div>;
+  }
 
   return (
     <Container sx={{ mt: 3 }}>
@@ -165,18 +288,27 @@ function TicketPurchasePage() {
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <img
-              src={film.posterUrl}
+              src={film.posterUrl || 'https://via.placeholder.com/200x300?text=Poster'}
               alt={film.title}
               style={{ width: 200, height: 300 }}
+              onError={(e) => {
+                console.log('TicketPurchasePage - Image load error, using placeholder');
+                e.target.src = 'https://via.placeholder.com/200x300?text=No+Poster';
+              }}
             />
             <Box>
               <Typography>Gatunek: {film.genre}</Typography>
               <Typography>Czas trwania: {film.duration} min</Typography>
+              {/* Można też wyświetlić dane seansu */}
+              <Typography>Data seansu: {seance.date}</Typography>
+              <Typography>Godzina rozpoczęcia: {seance.startTime}</Typography>
+              <Typography>Sala: {seance.roomNumber}</Typography>
             </Box>
           </Box>
         </>
       )}
 
+      {/* Dodawanie biletów */}
       <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
         <Button variant="outlined" onClick={() => addTicket('normal')}>
           Dodaj bilet Normalny
@@ -189,15 +321,13 @@ function TicketPurchasePage() {
         </Button>
       </Box>
 
+      {/* Lista wybranych biletów */}
       <Box sx={{ mt: 2 }}>
         <Typography variant="h6">Wybrane bilety:</Typography>
         {tickets.map((ticket, index) => (
-          <Box
-            key={index}
-            sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}
-          >
+          <Box key={index} sx={{ display: 'flex', gap: 2, mb: 1 }}>
             <Typography>
-              Bilet: {ticket.type} — Cena: {ticket.price} zł
+              Bilet: {ticket.type} – Cena: {ticket.price} zł
               {ticket.seat ? ` (Miejsce: ${ticket.seat})` : ''}
             </Typography>
             <Button variant="text" onClick={() => openSeatModal(index)}>
@@ -207,42 +337,39 @@ function TicketPurchasePage() {
         ))}
       </Box>
 
+      {/* Snacki */}
       <Box sx={{ mt: 3 }}>
         <Typography variant="h6" gutterBottom>Dodaj przekąski:</Typography>
         {snacks.map((snack, i) => (
-          <Box
-            key={snack.name}
-            sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}
-          >
+          <Box key={snack.name} sx={{ display: 'flex', gap: 2, mb: 1 }}>
             <Typography>
               {snack.name} ({snack.price} zł/szt.)
             </Typography>
             <TextField
               type="number"
               value={snack.quantity}
-              onChange={(e) =>
-                handleSnackChange(i, parseInt(e.target.value) || 0)
-              }
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10) || 0;
+                handleSnackChange(i, val);
+              }}
               sx={{ width: 60 }}
             />
           </Box>
         ))}
       </Box>
 
+      {/* Podsumowanie */}
       <Box sx={{ mt: 3 }}>
-        <Typography variant="body1">
-          Suma za bilety: {totalTicketsCost} zł
-        </Typography>
-        <Typography variant="body1">
-          Suma za snacki: {totalSnacksCost} zł
-        </Typography>
+        <Typography>Suma za bilety: {totalTicketsCost} zł</Typography>
+        <Typography>Suma za snacki: {totalSnacksCost} zł</Typography>
         <Typography variant="h5" sx={{ mt: 1 }}>
           Razem do zapłaty: {totalCost} zł
         </Typography>
       </Box>
 
+      {/* Przyciski akcji */}
       <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-        <Button variant="contained" color="primary" onClick={handleReservation}>
+        <Button variant="contained" onClick={handleReservation}>
           Zarezerwuj
         </Button>
         <Button variant="contained" color="success" onClick={handlePayment}>
@@ -250,12 +377,13 @@ function TicketPurchasePage() {
         </Button>
       </Box>
 
+      {/* Modal do wyboru miejsc */}
       {showModal && (
         <SeatSelectionModal
           onClose={closeSeatModal}
           onSeatSelected={handleSeatSelected}
-          occupiedSeats={[]} // ewentualnie pobierz z backendu
-          vipRows={[4,5]}
+          occupiedSeats={occupiedSeats}
+          vipRows={[4, 5]}
         />
       )}
     </Container>

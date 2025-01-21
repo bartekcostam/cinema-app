@@ -1,13 +1,12 @@
-// frontend/src/pages/components/SeatSelectionModal.js
+// frontend/src/pages/user/components/SeatSelectionModal.js
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
 function SeatSelectionModal({
   onClose,
   onSeatSelected,
-  // Możesz przekazać tablicę zajętych miejsc + rzędy vip
   occupiedSeats = [],
   vipRows = [4, 5]
 }) {
@@ -31,9 +30,10 @@ function SeatSelectionModal({
 
   const handleSeatClick = (row, col) => {
     const seatId = `${row}-${col}`;
-    if (occupiedSeats.includes(seatId)) return; // Zajęte
-    const isVip = vipRows.includes(row);
+    // Jeśli miejsce jest zajęte – blokujemy
+    if (occupiedSeats.includes(seatId)) return;
 
+    const isVip = vipRows.includes(row);
     onSeatSelected({ seatId, isVip });
   };
 
@@ -106,37 +106,50 @@ function SeatSelectionModal({
             {Array.from({ length: rows }).map((_, rowIndex) => {
               const row = rowIndex + 1;
               return (
-                <Box key={`row-${row}`} sx={{ display: 'flex' }}>
+                <Box
+                  key={`row-${row}`}
+                  sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                >
+                  {/* Etykieta rzędu (np. "Rząd 1 (VIP)") */}
+                  <Typography sx={{ width: 80, textAlign: 'right', mr: 2 }}>
+                    Rząd {row} {vipRows.includes(row) ? '(VIP)' : ''}
+                  </Typography>
+
                   {Array.from({ length: cols }).map((__, colIndex) => {
                     const col = colIndex + 1;
                     const seatId = `${row}-${col}`;
                     const isOccupied = occupiedSeats.includes(seatId);
                     const isVip = vipRows.includes(row);
 
-                    let bgColor = '#666'; // wolne normal
-                    if (isOccupied) bgColor = '#d32f2f'; // red
-                    if (isVip && !isOccupied) bgColor = '#ffb74d'; // VIP
+                    let bgColor = '#666'; // wolne - standard
+                    if (isOccupied) bgColor = '#d32f2f'; // czerwony = zajęte
+                    else if (isVip) bgColor = '#ffb74d'; // VIP
+
+                    // Tekst tooltipa
+                    const seatInfo = `Rząd ${row}, Miejsce ${col}${
+                      isVip ? ' (VIP)' : ''
+                    } – ${isOccupied ? 'Zajęte' : 'Wolne'}`;
 
                     return (
-                      <motion.div
-                        key={`seat-${seatId}`}
-                        onClick={() => handleSeatClick(row, col)}
-                        style={{
-                          width: 24,
-                          height: 24,
-                          margin: 3,
-                          borderRadius: 4,
-                          cursor: isOccupied ? 'not-allowed' : 'pointer',
-                          backgroundColor: bgColor
-                        }}
-                        whileHover={{
-                          scale: isOccupied ? 1 : 1.2
-                        }}
-                        whileTap={{
-                          scale: isOccupied ? 1 : 0.9
-                        }}
-                        title={`Rząd ${row}, Miejsce ${col} ${isVip ? '(VIP)' : '(Standard)'}`}
-                      />
+                      <Tooltip key={seatId} title={seatInfo} arrow>
+                        <motion.div
+                          onClick={() => handleSeatClick(row, col)}
+                          style={{
+                            width: 24,
+                            height: 24,
+                            margin: 3,
+                            borderRadius: 4,
+                            cursor: isOccupied ? 'not-allowed' : 'pointer',
+                            backgroundColor: bgColor
+                          }}
+                          whileHover={{
+                            scale: isOccupied ? 1 : 1.2
+                          }}
+                          whileTap={{
+                            scale: isOccupied ? 1 : 0.9
+                          }}
+                        />
+                      </Tooltip>
                     );
                   })}
                 </Box>

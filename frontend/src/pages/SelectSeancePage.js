@@ -1,15 +1,15 @@
-// frontend/src/pages/SelectSeancePage.js
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Typography, List, ListItem, Button } from '@mui/material';
 
 function SelectSeancePage() {
-  const { filmId } = useParams();  // np. /select-seance/:filmId
+  const { filmId } = useParams();
   const navigate = useNavigate();
   const [seances, setSeances] = useState([]);
 
   useEffect(() => {
-    // Pobieramy seanse dla danego filmu
+    if (!filmId) return;
+    // Pobieramy seanse danego filmu
     fetch(`http://localhost:3001/api/seances?filmId=${filmId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -18,9 +18,9 @@ function SelectSeancePage() {
       .catch((err) => console.error('Error:', err));
   }, [filmId]);
 
+  // Tutaj kluczowe, by param do "ticket-purchase" był ID seansu (np. s.seanceId)
   const handleSeanceClick = (seanceId) => {
-    // Przechodzimy do widoku wyboru miejsc
-    navigate(`/seat-selection/${seanceId}`);
+    navigate(`/ticket-purchase/${seanceId}`);
   };
 
   return (
@@ -30,11 +30,14 @@ function SelectSeancePage() {
       </Typography>
       <List>
         {seances.map((s) => (
-          <ListItem key={s.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'start' }}>
+          <ListItem
+            key={s.seanceId} 
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'start' }}
+          >
             <Typography variant="subtitle1">
               {s.date} | {s.startTime} | Sala {s.roomNumber}
             </Typography>
-            <Button variant="contained" onClick={() => handleSeanceClick(s.id)}>
+            <Button variant="contained" onClick={() => handleSeanceClick(s.seanceId)}>
               Wybierz
             </Button>
           </ListItem>

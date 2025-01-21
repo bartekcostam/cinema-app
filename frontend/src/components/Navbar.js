@@ -1,4 +1,3 @@
-// frontend/src/components/Navbar.js
 import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, IconButton } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -7,20 +6,21 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 function Navbar() {
   const navigate = useNavigate();
 
-  // Od razu wczytujemy z localStorage, aby uniknąć migania
+  // Od razu wczytujemy z localStorage
   const initialToken = localStorage.getItem('token');
   const initialRole = localStorage.getItem('role');
 
   const [loggedIn, setLoggedIn] = useState(!!initialToken);
   const [role, setRole] = useState(initialRole);
 
+  // Użyjemy useEffect bez drugiego argumentu, by przy każdej zmianie stanu
+  // (np. przejście do innej strony) sprawdzić localStorage:
   useEffect(() => {
-    // Gdyby token/role zmieniły się dynamicznie
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('role');
     setLoggedIn(!!token);
     setRole(userRole);
-  }, []);
+  });
 
   const handleLogoClick = () => {
     if (!loggedIn) {
@@ -28,7 +28,8 @@ function Navbar() {
     } else if (role === 'admin') {
       navigate('/admin/dashboard');
     } else {
-      navigate('/'); // lub /user/dashboard
+      // Zalogowany user
+      navigate('/');
     }
   };
 
@@ -37,12 +38,13 @@ function Navbar() {
     localStorage.removeItem('role');
     setLoggedIn(false);
     setRole(null);
-    navigate('/login');
+    // Proste wymuszenie odświeżenia, by navbar zaktualizował stan
+    window.location.reload();
   };
 
   // Przycisk "Cofnij"
   const handleBack = () => {
-    navigate(-1); // cofamy się w historii
+    navigate(-1); 
   };
 
   return (
